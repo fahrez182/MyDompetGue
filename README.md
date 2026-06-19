@@ -22,12 +22,12 @@ MyDompetGue is a personal finance management application designed to help users 
     *   Financial summary overview (total income, expenses, balance).
     *   Simple charts (optional, can be added later).
 3.  **Transaction Management**:
-    *   Add Transactions (Income/Expense).
-    *   Edit Transactions.
-    *   Delete Transactions.
-    *   View Transaction List (with date and category filters).
+    * [x] Add Transactions (Income/Expense).
+    * [x] Edit Transactions.
+    * [x] Delete Transactions.
+    * [x] View Transaction List (with date and category filters).
 4.  **Transaction Categories**:
-    *   Create, Edit, Delete Categories (e.g., Food, Transportation, Salary).
+    * [x] Create, Edit, Delete Categories (e.g., Food, Transportation, Salary).
 
 ### Fase 2: Currency Exchange Rate Features
 
