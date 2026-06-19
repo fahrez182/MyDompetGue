@@ -16,16 +16,8 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    // On page load or when changing themes, best to add inline in `head` to avoid FOUC
-    if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-        htmlElement.classList.add('dark');
-        darkIcon.classList.remove('hidden');
-        lightIcon.classList.add('hidden');
-    } else {
-        htmlElement.classList.remove('dark');
-        darkIcon.classList.add('hidden');
-        lightIcon.classList.remove('hidden');
-    }
+    // The initial theme setting is now handled in resources/views/layouts/app.blade.php
+    // This part only handles the click event for toggling the theme.
 
     themeToggleBtn.addEventListener('click', function() {
         if (htmlElement.classList.contains('dark')) {

@@ -16,14 +16,14 @@
                         <!-- Category Name -->
                         <div>
                             <x-input-label for="name" :value="__('Category Name')" class="dark:text-gray-200" />
-                            <x-text-input id="name" class="block mt-1 w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200" type="text" name="name" :value="old('name', $category->name)" required autofocus />
+                            <x-text-input id="name" class="block mt-1 w-full" type="text" name="name" :value="old('name', $category->name)" required autofocus />
                             <x-input-error :messages="$errors->get('name')" class="mt-2" />
                         </div>
 
                         <!-- Category Type -->
                         <div class="mt-4">
                             <x-input-label for="type" :value="__('Category Type')" class="dark:text-gray-200" />
-                            <select id="type" name="type" class="block mt-1 w-full border-gray-300 dark:border-gray-600 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-200" required>
+                            <select id="type" name="type" class="block mt-1 w-full border-gray-300 dark:border-gray-700 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm dark:bg-gray-900 dark:text-gray-300" required>
                                 <option value="income" {{ old('type', $category->type) == 'income' ? 'selected' : '' }}>{{ __('Income') }}</option>
                                 <option value="expense" {{ old('type', $category->type) == 'expense' ? 'selected' : '' }}>{{ __('Expense') }}</option>
                             </select>
@@ -31,7 +31,7 @@
                         </div>
 
                         <div class="flex items-center justify-end mt-4">
-                            <x-primary-button class="ms-4 bg-gray-800 dark:bg-gray-700 hover:bg-gray-700 dark:hover:bg-gray-600 active:bg-gray-900 dark:active:bg-gray-800">
+                            <x-primary-button class="ms-4 bg-gray-800 dark:bg-gray-700 hover:bg-gray-700 dark:hover:bg-gray-600 focus:bg-gray-700 dark:focus:bg-gray-600 active:bg-gray-900 dark:active:bg-gray-800">
                                 {{ __('Update Category') }}
                             </x-primary-button>
                         </div>
