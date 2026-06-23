@@ -26,6 +26,7 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'base_currency', // Added base_currency to fillable
         'password',
     ];
 

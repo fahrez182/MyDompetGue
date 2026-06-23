@@ -20,6 +20,7 @@ class Transaction extends Model
         'user_id',
         'category_id',
         'amount',
+        'currency', // Added currency to fillable
         'type',
         'description',
         'transaction_date',

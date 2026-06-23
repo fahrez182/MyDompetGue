@@ -31,10 +31,10 @@ MyDompetGue is a personal finance management application designed to help users 
 
 ### Fase 2: Currency Exchange Rate Features
 
-1.  **Exchange Rate API Integration**:
+1.  [x] **Exchange Rate API Integration**:
     *   Select and integrate a currency exchange rate API (e.g., ExchangeRate-API, Open Exchange Rates).
     *   Store exchange rates in the database periodically (semi-realtime).
-2.  **Currency Conversion**:
+2.  [x] **Currency Conversion**:
     *   Allow users to select transaction currency.
     *   Display transaction values in both the user's base currency and the transaction currency.
 

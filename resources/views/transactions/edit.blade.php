@@ -20,6 +20,19 @@
                             <x-input-error :messages="$errors->get('amount')" class="mt-2" />
                         </div>
 
+                        <!-- Currency -->
+                        <div class="mt-4">
+                            <x-input-label for="currency" :value="__('Currency')" class="dark:text-gray-200" />
+                            <select id="currency" name="currency" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm dark:bg-gray-900 dark:text-gray-100 dark:border-gray-700" required>
+                                @foreach ($currencies as $currency)
+                                    <option value="{{ $currency }}" {{ old('currency', $transaction->currency) == $currency ? 'selected' : '' }}>
+                                        {{ $currency }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            <x-input-error :messages="$errors->get('currency')" class="mt-2" />
+                        </div>
+
                         <!-- Type -->
                         <div class="mt-4">
                             <x-input-label for="type" :value="__('Type')" class="dark:text-gray-200" />

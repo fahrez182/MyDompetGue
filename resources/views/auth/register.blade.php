@@ -16,6 +16,23 @@
             <x-input-error :messages="$errors->get('email')" class="mt-2" />
         </div>
 
+        <!-- Base Currency -->
+        <div class="mt-4">
+            <x-input-label for="base_currency" :value="__('Base Currency')" />
+            <select id="base_currency" name="base_currency" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm dark:bg-gray-900 dark:text-gray-100 dark:border-gray-700" required>
+                @php
+                    // This list should ideally come from a shared config or helper
+                    $supportedCurrencies = ['USD', 'IDR', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF', 'CNY', 'SGD'];
+                @endphp
+                @foreach ($supportedCurrencies as $currency)
+                    <option value="{{ $currency }}" {{ old('base_currency', 'USD') == $currency ? 'selected' : '' }}>
+                        {{ $currency }}
+                    </option>
+                @endforeach
+            </select>
+            <x-input-error :messages="$errors->get('base_currency')" class="mt-2" />
+        </div>
+
         <!-- Password -->
         <div class="mt-4">
             <x-input-label for="password" :value="__('Password')" />

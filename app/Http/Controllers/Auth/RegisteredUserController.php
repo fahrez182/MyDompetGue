@@ -15,6 +15,9 @@ use Illuminate\View\View;
 
 class RegisteredUserController extends Controller
 {
+    // Define a list of supported currencies (should be consistent with other parts of the app)
+    const SUPPORTED_CURRENCIES = ['USD', 'IDR', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF', 'CNY', 'SGD'];
+
     /**
      * Display the registration view.
      */
@@ -33,12 +36,14 @@ class RegisteredUserController extends Controller
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
+            'base_currency' => ['required', 'string', 'size:3', 'in:' . implode(',', self::SUPPORTED_CURRENCIES)], // Added base_currency validation
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
+            'base_currency' => $request->base_currency, // Added base_currency to user creation
             'password' => Hash::make($request->password),
         ]);
 
