@@ -14,11 +14,11 @@ MyDompetGue is a personal finance management application designed to help users 
 
 ### Fase 1: Core Functionality (Basic User)
 
-1.  **User Authentication & Authorization**:
+1.  [x] **User Authentication & Authorization**:
     *   User Registration (Basic User)
     *   Login & Logout
     *   Middleware to protect authenticated routes.
-2.  **Dashboard**:
+2.  [x] **Dashboard**:
     *   Financial summary overview (total income, expenses, balance).
     *   Simple charts (optional, can be added later).
 3.  **Transaction Management**:
