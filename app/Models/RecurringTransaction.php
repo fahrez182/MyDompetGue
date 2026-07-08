@@ -6,9 +6,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class Transaction extends Model
+class RecurringTransaction extends Model
 {
-    /** @use HasFactory<\Database\Factories\TransactionFactory> */
     use HasFactory;
 
     /**
@@ -18,13 +17,16 @@ class Transaction extends Model
      */
     protected $fillable = [
         'user_id',
-        'wallet_id', // Added wallet_id to fillable
         'category_id',
-        'amount',
-        'currency', // Added currency to fillable
-        'type',
         'description',
-        'transaction_date',
+        'amount',
+        'currency',
+        'type',
+        'frequency',
+        'start_date',
+        'end_date',
+        'last_run_date',
+        'next_run_date',
     ];
 
     /**
@@ -33,12 +35,14 @@ class Transaction extends Model
      * @var array<string, string>
      */
     protected $casts = [
-        'transaction_date' => 'date',
-        'amount' => 'decimal:2',
+        'start_date' => 'date',
+        'end_date' => 'date',
+        'last_run_date' => 'date',
+        'next_run_date' => 'date',
     ];
 
     /**
-     * Get the user that owns the transaction.
+     * Get the user that owns the recurring transaction.
      */
     public function user(): BelongsTo
     {
@@ -46,18 +50,10 @@ class Transaction extends Model
     }
 
     /**
-     * Get the category that owns the transaction.
+     * Get the category that the recurring transaction belongs to.
      */
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
-    }
-
-    /**
-     * Get the wallet that owns the transaction.
-     */
-    public function wallet(): BelongsTo
-    {
-        return $this->belongsTo(Wallet::class);
     }
 }

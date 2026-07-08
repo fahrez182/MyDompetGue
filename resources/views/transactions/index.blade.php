@@ -16,6 +16,32 @@
                         </a>
                     </div>
 
+                    <!-- Wallet Filter (Premium Only) -->
+                    @if (Auth::user()->role === 'premium')
+                        <div class="mb-4">
+                            <form method="GET" action="{{ route('transactions.index') }}">
+                                <x-input-label for="wallet_filter" :value="__('Filter by Wallet')" class="dark:text-gray-200" />
+                                <select id="wallet_filter" name="wallet_id" class="block mt-1 w-full sm:w-1/3 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm dark:bg-gray-900 dark:text-gray-100 dark:border-gray-700" onchange="this.form.submit()">
+                                    <option value="">{{ __('All Wallets') }}</option>
+                                    @foreach ($wallets as $wallet)
+                                        <option value="{{ $wallet->id }}" {{ request('wallet_id') == $wallet->id ? 'selected' : '' }}>
+                                            {{ $wallet->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </form>
+                        </div>
+                    @else
+                        <div class="mb-4 p-4 bg-gray-100 dark:bg-gray-700 rounded-lg shadow-sm">
+                            <p class="text-sm text-gray-700 dark:text-gray-300">
+                                {{ __('Wallet filtering is a premium feature. Upgrade to manage and filter transactions by wallet.') }}
+                            </p>
+                            <a href="{{ route('premium.index') }}" class="mt-2 inline-flex items-center px-3 py-1.5 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
+                                {{ __('Upgrade to Premium') }}
+                            </a>
+                        </div>
+                    @endif
+
                     <div class="mt-6">
                         @if ($transactions->isEmpty())
                             <p class="text-gray-900 dark:text-gray-100">No transactions found.</p>
@@ -26,6 +52,9 @@
                                         <tr>
                                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                                 Date
+                                            </th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                                Wallet
                                             </th>
                                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                                 Description
@@ -52,6 +81,9 @@
                                             <tr>
                                                 <td class="px-6 py-4 whitespace-nowrap">
                                                     <div class="text-sm text-gray-900 dark:text-gray-100">{{ $transaction->transaction_date->format('M d, Y') }}</div>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <div class="text-sm text-gray-900 dark:text-gray-100">{{ $transaction->wallet->name ?? 'N/A' }}</div>
                                                 </td>
                                                 <td class="px-6 py-4 whitespace-nowrap">
                                                     <div class="text-sm text-gray-900 dark:text-gray-100">{{ $transaction->description }}</div>

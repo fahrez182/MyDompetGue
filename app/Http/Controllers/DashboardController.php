@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Transaction;
+use App\Models\Budget;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Support\Facades\Auth;
@@ -20,7 +21,18 @@ class DashboardController extends Controller
         $user = Auth::user();
         $userBaseCurrency = $user->base_currency ?? 'USD';
 
-        $transactions = Transaction::where('user_id', $user->id)->get();
+        // Ensure the user object and its relationships are fresh
+        $user->load('defaultWallet', 'wallets'); // Load all wallets as well
+        $defaultWallet = $user->defaultWallet;
+        $wallets = $user->wallets; // Get all wallets for the dropdown
+
+        // If no default wallet, redirect or show an error
+        if (!$defaultWallet) {
+            return redirect()->route('profile.edit')->with('error', 'Please set a default wallet to view your dashboard summary.');
+        }
+
+        // Fetch transactions for the default wallet only
+        $transactions = $defaultWallet->transactions()->get();
 
         $totalIncome = 0;
         $totalExpense = 0;
@@ -30,12 +42,12 @@ class DashboardController extends Controller
                 $transaction->amount,
                 $transaction->currency,
                 $userBaseCurrency,
-                $transaction->transaction_date->toDateString() // Use transaction date for rate
+                $transaction->transaction_date->toDateString()
             );
 
             Log::debug('DashboardController: Transaction conversion attempt', [
                 'transaction_id' => $transaction->id,
-                'type' => $transaction->type, // Added type for easier debugging
+                'type' => $transaction->type,
                 'original_amount' => $transaction->amount,
                 'original_currency' => $transaction->currency,
                 'target_currency' => $userBaseCurrency,
@@ -61,8 +73,8 @@ class DashboardController extends Controller
 
         $balance = $totalIncome - $totalExpense;
 
-        // Ambil 5 transaksi terbaru dan tambahkan converted_amount
-        $recentTransactions = Transaction::where('user_id', $user->id)
+        // Ambil 5 transaksi terbaru dari default wallet
+        $recentTransactions = $defaultWallet->transactions()
                                         ->orderBy('transaction_date', 'desc')
                                         ->orderBy('created_at', 'desc')
                                         ->take(5)
@@ -74,12 +86,12 @@ class DashboardController extends Controller
                                                 $userBaseCurrency,
                                                 $transaction->transaction_date->toDateString()
                                             );
-                                            $transaction->converted_amount = $convertedAmount ?? $transaction->amount; // Fallback to original if conversion fails
+                                            $transaction->converted_amount = $convertedAmount ?? $transaction->amount;
                                             $transaction->converted_currency = $userBaseCurrency;
                                             return $transaction;
                                         });
 
-        // Data untuk grafik
+        // Data untuk grafik (dari default wallet)
         $months = [];
         $monthlyIncome = [];
         $monthlyExpense = [];
@@ -87,9 +99,9 @@ class DashboardController extends Controller
         // Ambil data untuk 6 bulan terakhir
         for ($i = 5; $i >= 0; $i--) {
             $month = Carbon::now()->subMonths($i);
-            $months[] = $month->format('M Y'); // e.g., Jan 2023
+            $months[] = $month->format('M Y');
 
-            $monthlyTransactions = Transaction::where('user_id', $user->id)
+            $monthlyTransactions = $defaultWallet->transactions()
                                 ->whereYear('transaction_date', $month->year)
                                 ->whereMonth('transaction_date', $month->month)
                                 ->get();
@@ -107,7 +119,7 @@ class DashboardController extends Controller
 
                 Log::debug('DashboardController: Chart transaction conversion attempt', [
                     'transaction_id' => $transaction->id,
-                    'type' => $transaction->type, // Added type for easier debugging
+                    'type' => $transaction->type,
                     'original_amount' => $transaction->amount,
                     'original_currency' => $transaction->currency,
                     'target_currency' => $userBaseCurrency,
@@ -135,6 +147,50 @@ class DashboardController extends Controller
             $monthlyExpense[] = $currentMonthExpense;
         }
 
+        // Fetch and calculate progress for budgets, filtered by the default wallet
+        $budgetsQuery = $user->budgets()->with('category');
+
+        if ($defaultWallet) {
+            $budgetsQuery->where('wallet_id', $defaultWallet->id);
+        }
+
+        $budgets = $budgetsQuery->latest()->get();
+
+        $budgets->each(function ($budget) use ($user, $userBaseCurrency, $defaultWallet) { // Pass $defaultWallet
+            $effectiveEndDate = $budget->end_date ? Carbon::parse($budget->end_date) : Carbon::now();
+            $startDate = Carbon::parse($budget->start_date);
+
+            // Now filtering transactions by the default wallet
+            $query = $defaultWallet->transactions()
+                          ->whereBetween('transaction_date', [$startDate, $effectiveEndDate]);
+
+            if ($budget->category_id) {
+                $query->where('category_id', $budget->category_id);
+                if ($budget->category->type === 'expense') {
+                    $query->where('type', 'expense');
+                } elseif ($budget->category->type === 'income') {
+                    $query->where('type', 'income');
+                }
+            } else {
+                $query->where('type', 'expense');
+            }
+
+            $currentSpent = 0;
+            foreach ($query->get() as $transaction) {
+                $convertedAmount = ExchangeRateHelper::convert(
+                    $transaction->amount,
+                    $transaction->currency,
+                    $userBaseCurrency,
+                    $transaction->transaction_date->toDateString()
+                );
+                $currentSpent += $convertedAmount ?? $transaction->amount;
+            }
+
+            $budget->current_spent = $currentSpent;
+            $budget->progress_percentage = ($budget->amount > 0) ? round(($currentSpent / $budget->amount) * 100, 2) : 0;
+        });
+
+
         return view('dashboard', compact(
             'totalIncome',
             'totalExpense',
@@ -143,7 +199,10 @@ class DashboardController extends Controller
             'months',
             'monthlyIncome',
             'monthlyExpense',
-            'userBaseCurrency' // Pass user's base currency to the view
+            'userBaseCurrency',
+            'budgets',
+            'defaultWallet',
+            'wallets' // Pass all wallets to the view
         ));
     }
 }

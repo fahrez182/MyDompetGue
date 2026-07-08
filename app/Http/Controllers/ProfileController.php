@@ -16,8 +16,12 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): View
     {
+        $user = $request->user();
+        $wallets = $user->wallets()->latest()->get(); // Fetch user's wallets
+
         return view('profile.edit', [
-            'user' => $request->user(),
+            'user' => $user,
+            'wallets' => $wallets, // Pass wallets to the view
         ]);
     }
 

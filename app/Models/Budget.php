@@ -6,9 +6,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class Transaction extends Model
+class Budget extends Model
 {
-    /** @use HasFactory<\Database\Factories\TransactionFactory> */
     use HasFactory;
 
     /**
@@ -21,24 +20,13 @@ class Transaction extends Model
         'wallet_id', // Added wallet_id to fillable
         'category_id',
         'amount',
-        'currency', // Added currency to fillable
-        'type',
-        'description',
-        'transaction_date',
+        'period',
+        'start_date',
+        'end_date',
     ];
 
     /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
-     */
-    protected $casts = [
-        'transaction_date' => 'date',
-        'amount' => 'decimal:2',
-    ];
-
-    /**
-     * Get the user that owns the transaction.
+     * Get the user that owns the budget.
      */
     public function user(): BelongsTo
     {
@@ -46,7 +34,7 @@ class Transaction extends Model
     }
 
     /**
-     * Get the category that owns the transaction.
+     * Get the category that the budget belongs to.
      */
     public function category(): BelongsTo
     {
@@ -54,7 +42,7 @@ class Transaction extends Model
     }
 
     /**
-     * Get the wallet that owns the transaction.
+     * Get the wallet that the budget belongs to.
      */
     public function wallet(): BelongsTo
     {

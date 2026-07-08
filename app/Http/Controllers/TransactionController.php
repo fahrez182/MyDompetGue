@@ -4,16 +4,17 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\Transaction;
+use App\Models\Wallet;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Support\Facades\Auth;
 use App\Helpers\ExchangeRateHelper;
-use Illuminate\Support\Facades\Log; // Import Log facade
+use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 
 class TransactionController extends Controller
 {
-    // Define a list of supported currencies
     const SUPPORTED_CURRENCIES = ['USD', 'IDR', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF', 'CNY', 'SGD'];
 
     /**
@@ -22,11 +23,17 @@ class TransactionController extends Controller
     public function index(): View
     {
         $user = auth()->user();
-        $userBaseCurrency = $user->base_currency ?? 'USD'; // Reverted to use user's base_currency
+        $userBaseCurrency = $user->base_currency ?? 'USD';
 
-        $transactions = $user->transactions()->latest()->paginate(10);
+        $walletId = request('wallet_id');
+        $transactionsQuery = $user->transactions();
 
-        // Add converted amount to each transaction
+        if ($walletId) {
+            $transactionsQuery->where('wallet_id', $walletId);
+        }
+
+        $transactions = $transactionsQuery->latest()->paginate(10);
+
         $transactions->getCollection()->transform(function ($transaction) use ($userBaseCurrency) {
             $convertedAmount = ExchangeRateHelper::convert(
                 $transaction->amount,
@@ -34,7 +41,7 @@ class TransactionController extends Controller
                 $userBaseCurrency,
                 $transaction->transaction_date->toDateString()
             );
-            $transaction->converted_amount = $convertedAmount ?? $transaction->amount; // Fallback to original if conversion fails
+            $transaction->converted_amount = $convertedAmount ?? $transaction->amount;
             $transaction->converted_currency = $userBaseCurrency;
 
             Log::debug('TransactionController: Transaction conversion in index view', [
@@ -49,7 +56,9 @@ class TransactionController extends Controller
             return $transaction;
         });
 
-        return view('transactions.index', compact('transactions', 'userBaseCurrency'));
+        $wallets = $user->wallets;
+
+        return view('transactions.index', compact('transactions', 'userBaseCurrency', 'wallets', 'walletId'));
     }
 
     /**
@@ -57,8 +66,9 @@ class TransactionController extends Controller
      */
     public function create(): View
     {
-        $categories = auth()->user()->categories()->get();
-        $userBaseCurrency = Auth::user()->base_currency ?? 'USD'; // Reverted to use user's base_currency
+        $user = auth()->user();
+        $categories = $user->categories()->get();
+        $userBaseCurrency = $user->base_currency ?? 'USD';
 
         return view('transactions.create', [
             'categories' => $categories,
@@ -72,6 +82,13 @@ class TransactionController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        $user = auth()->user();
+        $defaultWallet = $user->defaultWallet;
+
+        if (!$defaultWallet) {
+            return redirect()->back()->with('error', 'You must have a default wallet to create transactions. Please create one.');
+        }
+
         $validated = $request->validate([
             'amount' => ['required', 'numeric', 'min:0.01'],
             'currency' => ['required', 'string', 'size:3', 'in:' . implode(',', self::SUPPORTED_CURRENCIES)],
@@ -81,7 +98,14 @@ class TransactionController extends Controller
             'description' => ['nullable', 'string', 'max:255'],
         ]);
 
-        auth()->user()->transactions()->create($validated);
+        // Assign to the default wallet
+        $validated['wallet_id'] = $defaultWallet->id;
+
+        $transaction = $user->transactions()->create($validated);
+
+        // Update wallet balance
+        $amount = ($validated['type'] === 'income') ? $validated['amount'] : -$validated['amount'];
+        $defaultWallet->increment('balance', $amount);
 
         return redirect()->route('transactions.index')->with('success', 'Transaction created successfully!');
     }
@@ -101,8 +125,9 @@ class TransactionController extends Controller
     {
         $this->authorize('update', $transaction);
 
-        $categories = auth()->user()->categories()->get();
-        $userBaseCurrency = Auth::user()->base_currency ?? 'USD'; // Reverted to use user's base_currency
+        $user = auth()->user();
+        $categories = $user->categories()->get();
+        $userBaseCurrency = $user->base_currency ?? 'USD';
 
         return view('transactions.edit', [
             'transaction' => $transaction,
@@ -128,7 +153,15 @@ class TransactionController extends Controller
             'description' => ['nullable', 'string', 'max:255'],
         ]);
 
+        // Revert old transaction amount from its wallet
+        $oldAmount = ($transaction->type === 'income') ? $transaction->amount : -$transaction->amount;
+        $transaction->wallet->decrement('balance', $oldAmount);
+
         $transaction->update($validated);
+
+        // Apply new transaction amount to its wallet
+        $newAmount = ($validated['type'] === 'income') ? $validated['amount'] : -$validated['amount'];
+        $transaction->wallet->increment('balance', $newAmount);
 
         return redirect()->route('transactions.index')->with('success', 'Transaction updated successfully!');
     }
@@ -139,6 +172,13 @@ class TransactionController extends Controller
     public function destroy(Transaction $transaction): RedirectResponse
     {
         $this->authorize('delete', $transaction);
+
+        // Revert wallet balance before deleting transaction
+        $wallet = $transaction->wallet;
+        if ($wallet) {
+            $amount = ($transaction->type === 'income') ? $transaction->amount : -$transaction->amount;
+            $wallet->decrement('balance', $amount);
+        }
 
         $transaction->delete();
 
