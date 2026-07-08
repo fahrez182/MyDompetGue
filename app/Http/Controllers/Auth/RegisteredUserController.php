@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\Wallet; // Import the Wallet model
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -46,6 +47,21 @@ class RegisteredUserController extends Controller
             'base_currency' => $request->base_currency, // Added base_currency to user creation
             'password' => Hash::make($request->password),
         ]);
+
+        // Create a default wallet for the new user
+        $defaultWallet = Wallet::create([
+            'user_id' => $user->id,
+            'name' => 'Main Wallet', // Default name for the wallet
+            'balance' => 0, // Initial balance
+            'currency' => $user->base_currency, // Use the user's base currency
+        ]);
+
+        // Set the newly created wallet as the user's default wallet in the users table
+        $user->default_wallet_id = $defaultWallet->id;
+        $user->save();
+
+        // Also set the is_default flag in the wallets table
+        $defaultWallet->setDefault();
 
         event(new Registered($user));
 

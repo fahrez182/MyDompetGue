@@ -28,11 +28,9 @@ Route::middleware('auth')->group(function () {
     Route::resource('budgets', BudgetController::class);
     Route::resource('recurring-transactions', RecurringTransactionController::class);
 
-    // Wallet routes, now protected by 'premium' middleware
-    Route::middleware('premium')->group(function () {
-        Route::resource('wallets', WalletController::class);
-        Route::post('wallets/{wallet}/set-default', [WalletController::class, 'setDefault'])->name('wallets.set-default');
-    });
+    // Wallet routes, now accessible to all authenticated users
+    Route::resource('wallets', WalletController::class);
+    Route::post('wallets/{wallet}/set-default', [WalletController::class, 'setDefault'])->name('wallets.set-default');
 
     // Rute untuk Fitur Premium
     Route::get('/premium', [PremiumController::class, 'index'])

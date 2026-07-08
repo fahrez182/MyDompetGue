@@ -8,52 +8,36 @@
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             {{-- Quick Change Wallet Section --}}
-            @if (Auth::user()->role === 'premium')
-                @if ($defaultWallet)
-                    <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg mb-6">
-                        <div class="p-6 text-gray-900 dark:text-gray-100">
-                            <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
-                                {{ __('Current Wallet') }}: {{ $defaultWallet->name }}
-                            </h3>
-                            <p class="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                                {{ number_format($defaultWallet->balance, 2, ',', '.') }} {{ $defaultWallet->currency }}
-                            </p>
-                            <p class="text-sm text-gray-600 dark:text-gray-400 mt-1 mb-4">
-                                {{ __('This dashboard reflects transactions from your current default wallet.') }}
-                            </p>
-
-                            <form action="{{ route('wallets.set-default', ['wallet' => 'WALLET_ID_PLACEHOLDER']) }}" method="POST" id="quick-change-wallet-form">
-                                @csrf
-                                <x-input-label for="quick_change_wallet" :value="__('Quick Change Wallet')" class="dark:text-gray-200" />
-                                <select id="quick_change_wallet" name="wallet_id" class="block mt-1 w-full sm:w-1/2 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm dark:bg-gray-900 dark:text-gray-100 dark:border-gray-700" onchange="this.form.action = this.form.action.replace('WALLET_ID_PLACEHOLDER', this.value); this.form.submit();">
-                                    @foreach ($wallets as $wallet)
-                                        <option value="{{ $wallet->id }}" {{ $defaultWallet->id == $wallet->id ? 'selected' : '' }}>
-                                            {{ $wallet->name }} ({{ number_format($wallet->balance, 2) }} {{ $wallet->currency }})
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </form>
-                        </div>
-                    </div>
-                @else
-                    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6" role="alert">
-                        <span class="block sm:inline">{{ __('No default wallet set. Please go to your Profile settings to create or set a default wallet.') }}</span>
-                        <a href="{{ route('profile.edit') }}" class="font-semibold underline ml-2">{{ __('Go to Profile') }}</a>
-                    </div>
-                @endif
-            @else
+            @if ($defaultWallet)
                 <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg mb-6">
                     <div class="p-6 text-gray-900 dark:text-gray-100">
                         <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
-                            {{ __('Multi-Wallet Feature') }}
+                            {{ __('Current Wallet') }}: {{ $defaultWallet->name }}
                         </h3>
-                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1 mb-4">
-                            {{ __('Manage multiple wallets and quickly switch between them. This feature is available for premium users.') }}
+                        <p class="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                            {{ number_format($defaultWallet->balance, 2, ',', '.') }} {{ $defaultWallet->currency }}
                         </p>
-                        <a href="{{ route('premium.index') }}" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
-                            {{ __('Upgrade to Premium') }}
-                        </a>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1 mb-4">
+                            {{ __('This dashboard reflects transactions from your current default wallet.') }}
+                        </p>
+
+                        <form action="{{ route('wallets.set-default', ['wallet' => 'WALLET_ID_PLACEHOLDER']) }}" method="POST" id="quick-change-wallet-form">
+                            @csrf
+                            <x-input-label for="quick_change_wallet" :value="__('Quick Change Wallet')" class="dark:text-gray-200" />
+                            <select id="quick_change_wallet" name="wallet_id" class="block mt-1 w-full sm:w-1/2 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm dark:bg-gray-900 dark:text-gray-100 dark:border-gray-700" onchange="this.form.action = this.form.action.replace('WALLET_ID_PLACEHOLDER', this.value); this.form.submit();">
+                                @foreach ($wallets as $wallet)
+                                    <option value="{{ $wallet->id }}" {{ $defaultWallet->id == $wallet->id ? 'selected' : '' }}>
+                                        {{ $wallet->name }} ({{ number_format($wallet->balance, 2) }} {{ $wallet->currency }})
+                                    </option>
+                                @endforeach
+                            </select>
+                        </form>
                     </div>
+                </div>
+            @else
+                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6" role="alert">
+                    <span class="block sm:inline">{{ __('No default wallet set. Please go to your Profile settings to create or set a default wallet.') }}</span>
+                    <a href="{{ route('profile.edit') }}" class="font-semibold underline ml-2">{{ __('Go to Profile') }}</a>
                 </div>
             @endif
 

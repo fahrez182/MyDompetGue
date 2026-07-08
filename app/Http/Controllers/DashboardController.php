@@ -10,13 +10,14 @@ use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use App\Helpers\ExchangeRateHelper;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Http\RedirectResponse; // Import RedirectResponse
 
 class DashboardController extends Controller
 {
     /**
      * Display the dashboard view with financial summary, recent transactions, and chart data.
      */
-    public function index(): View
+    public function index(): View|RedirectResponse // Update return type
     {
         $user = Auth::user();
         $userBaseCurrency = $user->base_currency ?? 'USD';

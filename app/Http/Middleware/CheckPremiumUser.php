@@ -16,7 +16,7 @@ class CheckPremiumUser
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (Auth::check() && Auth::user()->role === 'premium') {
+        if (Auth::check()) {
             return $next($request);
         }
 
