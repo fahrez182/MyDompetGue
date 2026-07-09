@@ -2,7 +2,7 @@ FROM php:8.4-fpm
 
 RUN apt-get update && apt-get install -y \
     curl zip unzip git \
-    libpng-dev libxml2-dev libzip-dev \
+    libpng-dev libxml2-dev libzip-dev libonig-dev \
     && docker-php-ext-install pdo pdo_mysql mbstring xml zip
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
