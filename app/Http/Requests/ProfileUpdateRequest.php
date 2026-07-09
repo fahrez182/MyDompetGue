@@ -10,7 +10,7 @@ use Illuminate\Validation\Rule;
 class ProfileUpdateRequest extends FormRequest
 {
     // Define a list of supported currencies (should be consistent with other parts of the app)
-    const SUPPORTED_CURRENCIES = ['USD', 'IDR', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF', 'CNY', 'SGD'];
+    // const SUPPORTED_CURRENCIES = ['USD', 'IDR', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF', 'CNY', 'SGD']; // Removed
 
     /**
      * Get the validation rules that apply to the request.
@@ -19,6 +19,8 @@ class ProfileUpdateRequest extends FormRequest
      */
     public function rules(): array
     {
+        $supportedCurrencies = implode(',', config('currencies.supported')); // Use config
+
         return [
             'name' => ['required', 'string', 'max:255'],
             'email' => [
@@ -29,7 +31,7 @@ class ProfileUpdateRequest extends FormRequest
                 'max:255',
                 Rule::unique(User::class)->ignore($this->user()->id),
             ],
-            'base_currency' => ['required', 'string', 'size:3', 'in:' . implode(',', self::SUPPORTED_CURRENCIES)], // Added base_currency validation
+            'base_currency' => ['required', 'string', 'size:3', 'in:'.$supportedCurrencies], // Updated to use config
         ];
     }
 }

@@ -2,20 +2,17 @@
 
 namespace App\Helpers;
 
+use App\Jobs\FetchExchangeRates;
 use App\Models\ExchangeRate;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Log;
-use App\Jobs\FetchExchangeRates; // Import the job
+use Illuminate\Support\Facades\Log; // Import the job
 
 class ExchangeRateHelper
 {
     /**
      * Get the exchange rate between two currencies for a specific date.
      *
-     * @param string $fromCurrency
-     * @param string $toCurrency
-     * @param string|null $date (Y-m-d format, defaults to today)
-     * @return float|null
+     * @param  string|null  $date  (Y-m-d format, defaults to today)
      */
     public static function getRate(string $fromCurrency, string $toCurrency, ?string $date = null): ?float
     {
@@ -26,9 +23,9 @@ class ExchangeRateHelper
         return Cache::remember($cacheKey, now()->addHours(1), function () use ($fromCurrency, $toCurrency, $date, $commonBaseCurrency) {
             // 1. Try to find the direct rate
             $rate = ExchangeRate::where('from_currency', $fromCurrency)
-                                ->where('to_currency', $toCurrency)
-                                ->where('date', $date)
-                                ->first();
+                ->where('to_currency', $toCurrency)
+                ->where('date', $date)
+                ->first();
 
             if ($rate) {
                 Log::debug('ExchangeRateHelper: Direct rate found', [
@@ -37,14 +34,15 @@ class ExchangeRateHelper
                     'date' => $date,
                     'rate' => $rate->rate,
                 ]);
+
                 return (float) $rate->rate;
             }
 
             // 2. If direct rate not found, try to find the inverse rate
             $inverseRate = ExchangeRate::where('from_currency', $toCurrency)
-                                       ->where('to_currency', $fromCurrency)
-                                       ->where('date', $date)
-                                       ->first();
+                ->where('to_currency', $fromCurrency)
+                ->where('date', $date)
+                ->first();
 
             if ($inverseRate && $inverseRate->rate != 0) {
                 $calculatedRate = 1 / $inverseRate->rate;
@@ -55,12 +53,13 @@ class ExchangeRateHelper
                     'inverse_rate_found' => $inverseRate->rate,
                     'calculated_rate' => $calculatedRate,
                 ]);
+
                 return (float) $calculatedRate;
             }
 
             // 3. If direct and inverse rates not found, try triangulation via common base currency (USD)
             if ($fromCurrency !== $commonBaseCurrency && $toCurrency !== $commonBaseCurrency) {
-                Log::debug('ExchangeRateHelper: Attempting triangulation via ' . $commonBaseCurrency, [
+                Log::debug('ExchangeRateHelper: Attempting triangulation via '.$commonBaseCurrency, [
                     'from' => $fromCurrency,
                     'to' => $toCurrency,
                     'date' => $date,
@@ -78,7 +77,7 @@ class ExchangeRateHelper
 
                 if ($rateFromToCommon !== null && $rateCommonToTo !== null) {
                     $triangulatedRate = $rateFromToCommon * $rateCommonToTo;
-                    Log::debug('ExchangeRateHelper: Triangulated rate found and calculated via ' . $commonBaseCurrency, [
+                    Log::debug('ExchangeRateHelper: Triangulated rate found and calculated via '.$commonBaseCurrency, [
                         'from' => $fromCurrency,
                         'to' => $toCurrency,
                         'date' => $date,
@@ -86,13 +85,15 @@ class ExchangeRateHelper
                         'rate_common_to_to' => $rateCommonToTo,
                         'triangulated_rate' => $triangulatedRate,
                     ]);
+
                     return (float) $triangulatedRate;
                 }
             }
 
             // 4. If no rate found (direct, inverse, or triangulated), dispatch a job to fetch it
             Log::warning("ExchangeRateHelper: Exchange rate not found (direct, inverse, or triangulated) for {$fromCurrency} to {$toCurrency} on {$date}. Dispatching FetchExchangeRates job for {$date}.");
-            FetchExchangeRates::dispatch($date); // Dispatch the job for the missing date
+            // Pass the supported currencies from config to the job
+            FetchExchangeRates::dispatch($date, config('currencies.supported'));
 
             return null; // Still return null for the current request as the job is asynchronous
         });
@@ -101,11 +102,7 @@ class ExchangeRateHelper
     /**
      * Convert an amount from one currency to another.
      *
-     * @param float $amount
-     * @param string $fromCurrency
-     * @param string $toCurrency
-     * @param string|null $date (Y-m-d format, defaults to today)
-     * @return float|null
+     * @param  string|null  $date  (Y-m-d format, defaults to today)
      */
     public static function convert(float $amount, string $fromCurrency, string $toCurrency, ?string $date = null): ?float
     {
@@ -118,6 +115,7 @@ class ExchangeRateHelper
 
         if ($fromCurrency === $toCurrency) {
             Log::debug('ExchangeRateHelper: Currencies are the same, returning original amount.');
+
             return $amount;
         }
 
@@ -129,10 +127,12 @@ class ExchangeRateHelper
                 'rate' => $rate,
                 'converted_amount' => $convertedAmount,
             ]);
+
             return $convertedAmount;
         }
 
         Log::warning("ExchangeRateHelper: Conversion failed due to missing rate for {$fromCurrency} to {$toCurrency} on {$date}.");
+
         return null;
     }
 }

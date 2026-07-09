@@ -17,14 +17,32 @@ class FetchExchangeRates implements ShouldQueue
 
     public string $date;
 
+    public array $targetCurrencies; // Make targetCurrencies a public property
+
+    /**
+     * The number of times the job may be attempted.
+     *
+     * @var int
+     */
+    public $tries = 3;
+
+    /**
+     * The number of seconds to wait before retrying the job.
+     *
+     * @var int
+     */
+    public $backoff = 5;
+
     /**
      * Create a new job instance.
      *
-     * @param string|null $date The date for which to fetch exchange rates (Y-m-d format). Defaults to today.
+     * @param  string|null  $date  The date for which to fetch exchange rates (Y-m-d format). Defaults to today.
+     * @param  array  $targetCurrencies  The list of currencies to fetch rates for.
      */
-    public function __construct(?string $date = null)
+    public function __construct(?string $date = null, array $targetCurrencies = [])
     {
         $this->date = $date ?? now()->toDateString();
+        $this->targetCurrencies = $targetCurrencies; // Assign to the property
     }
 
     /**
@@ -33,16 +51,24 @@ class FetchExchangeRates implements ShouldQueue
     public function handle(): void
     {
         $apiKey = config('services.exchange_rate_api.key');
-        if (!$apiKey) {
+        if (! $apiKey) {
             Log::error('FetchExchangeRates: EXCHANGE_RATE_API_KEY is not set in .env or services config.');
+
             return;
         }
 
-        $baseCurrency = 'USD'; // You can make this configurable or dynamic
-        $targetCurrencies = ['IDR', 'EUR', 'GBP', 'JPY']; // Add more as needed
+        $baseCurrency = 'USD'; // The common base currency fetched by ExchangeRate-API
+        $targetCurrencies = $this->targetCurrencies; // Use the dynamic target currencies
         $fetchDate = $this->date; // Use the date passed to the constructor
 
-        Log::debug("FetchExchangeRates: Attempting to fetch rates for date {$fetchDate}.");
+        // If no target currencies are provided, log a warning and exit
+        if (empty($targetCurrencies)) {
+            Log::warning('FetchExchangeRates: No target currencies provided. Skipping API call.');
+
+            return;
+        }
+
+        Log::debug("FetchExchangeRates: Attempting to fetch rates for date {$fetchDate} for target currencies: ".implode(', ', $targetCurrencies));
 
         // Check if rates for the specific date already exist in the database for all target currencies
         $existingRatesCount = ExchangeRate::where('from_currency', $baseCurrency)
@@ -51,7 +77,8 @@ class FetchExchangeRates implements ShouldQueue
             ->count();
 
         if ($existingRatesCount === count($targetCurrencies)) {
-            Log::info("FetchExchangeRates: Exchange rates for {$fetchDate} are already up-to-date in the database. Skipping API call.");
+            Log::info("FetchExchangeRates: Exchange rates for {$fetchDate} are already up-to-date in the database for all specified target currencies. Skipping API call.");
+
             return;
         }
 
@@ -69,7 +96,7 @@ class FetchExchangeRates implements ShouldQueue
 
             if ($response->successful()) {
                 if (isset($data['conversion_rates'])) {
-                    Log::debug("FetchExchangeRates: API response successful, processing conversion rates.", ['base_code' => $data['base_code'], 'conversion_rates_keys' => array_keys($data['conversion_rates'])]);
+                    Log::debug('FetchExchangeRates: API response successful, processing conversion rates.', ['base_code' => $data['base_code'], 'conversion_rates_keys' => array_keys($data['conversion_rates'])]);
 
                     foreach ($targetCurrencies as $target) {
                         if (isset($data['conversion_rates'][$target])) {
@@ -97,7 +124,7 @@ class FetchExchangeRates implements ShouldQueue
                 Log::error('FetchExchangeRates: Failed to fetch exchange rates from API.', ['status' => $response->status(), 'response' => $data]);
             }
         } catch (\Exception $e) {
-            Log::error('FetchExchangeRates: Error fetching exchange rates: ' . $e->getMessage(), ['exception' => $e]);
+            Log::error('FetchExchangeRates: Error fetching exchange rates: '.$e->getMessage(), ['exception' => $e]);
         }
     }
 }
