@@ -14,8 +14,9 @@
                         <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
                             {{ __('Current Wallet') }}: {{ $defaultWallet->name }}
                         </h3>
+                        {{-- Displaying default wallet balance in user's base currency for consistency --}}
                         <p class="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                            {{ number_format($defaultWallet->balance, 2, ',', '.') }} {{ $defaultWallet->currency }}
+                            {{ number_format($defaultWallet->balance, 2, ',', '.') }} {{ $userBaseCurrency }}
                         </p>
                         <p class="text-sm text-gray-600 dark:text-gray-400 mt-1 mb-4">
                             {{ __('This dashboard reflects transactions from your current default wallet.') }}
@@ -27,7 +28,7 @@
                             <select id="quick_change_wallet" name="wallet_id" class="block mt-1 w-full sm:w-1/2 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm dark:bg-gray-900 dark:text-gray-100 dark:border-gray-700" onchange="this.form.action = this.form.action.replace('WALLET_ID_PLACEHOLDER', this.value); this.form.submit();">
                                 @foreach ($wallets as $wallet)
                                     <option value="{{ $wallet->id }}" {{ $defaultWallet->id == $wallet->id ? 'selected' : '' }}>
-                                        {{ $wallet->name }} ({{ number_format($wallet->balance, 2) }} {{ $wallet->currency }})
+                                        {{ $wallet->name }} ({{ number_format($wallet->converted_balance, 2) }} {{ $userBaseCurrency }})
                                     </option>
                                 @endforeach
                             </select>
@@ -76,10 +77,10 @@
                                 <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg shadow">
                                     <p class="text-md font-medium text-gray-900 dark:text-gray-100">{{ $budget->category->name ?? 'General Budget' }}</p>
                                     <p class="text-sm text-gray-600 dark:text-gray-400">
-                                        {{ ucfirst($budget->period) }} Budget: Rp {{ number_format($budget->amount, 2) }}
+                                        {{ ucfirst($budget->period) }} Budget: {{ number_format($budget->converted_amount, 2) }} {{ $userBaseCurrency }}
                                     </p>
                                     <p class="text-sm text-gray-600 dark:text-gray-400">
-                                        Spent: Rp {{ number_format($budget->current_spent, 2) }}
+                                        Spent: {{ number_format($budget->current_spent, 2) }} {{ $userBaseCurrency }}
                                     </p>
                                     <div class="w-full bg-gray-200 rounded-full h-2.5 mt-2 dark:bg-gray-600">
                                         <div class="h-2.5 rounded-full {{ $budget->progress_percentage > 100 ? 'bg-red-600' : 'bg-blue-600' }}" style="width: {{ min(100, $budget->progress_percentage) }}%"></div>

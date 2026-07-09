@@ -20,6 +20,7 @@ class Budget extends Model
         'wallet_id', // Added wallet_id to fillable
         'category_id',
         'amount',
+        'currency', // Added currency to fillable
         'period',
         'start_date',
         'end_date',

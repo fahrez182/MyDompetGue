@@ -12,8 +12,6 @@ use Illuminate\View\View;
 
 class TransactionController extends Controller
 {
-    // const SUPPORTED_CURRENCIES = ['USD', 'IDR', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF', 'CNY', 'SGD']; // Removed
-
     /**
      * Display a listing of the resource.
      */
@@ -81,7 +79,7 @@ class TransactionController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $user = auth()->user();
-        $userBaseCurrency = $user->base_currency ?? 'USD';
+        $userBaseCurrency = $user->base_currency ?? 'USD'; // This is user's base currency, not wallet's
         $defaultWallet = $user->defaultWallet;
 
         if (! $defaultWallet) {
@@ -104,7 +102,7 @@ class TransactionController extends Controller
 
         $transaction = $user->transactions()->create($validated);
 
-        // Convert amount to user's base currency for wallet update
+        // Convert amount to the wallet's currency for wallet balance update
         $transactionAmount = $validated['amount'];
         $transactionCurrency = $validated['currency'];
         $transactionDate = $validated['transaction_date'];
@@ -112,7 +110,7 @@ class TransactionController extends Controller
         $convertedAmountForWallet = ExchangeRateHelper::convert(
             $transactionAmount,
             $transactionCurrency,
-            $userBaseCurrency,
+            $defaultWallet->currency, // Convert to default wallet's currency
             $transactionDate
         );
 
@@ -159,7 +157,7 @@ class TransactionController extends Controller
         $this->authorize('update', $transaction);
 
         $user = auth()->user();
-        $userBaseCurrency = $user->base_currency ?? 'USD';
+        $userBaseCurrency = $user->base_currency ?? 'USD'; // This is user's base currency, not wallet's
 
         $supportedCurrencies = implode(',', config('currencies.supported')); // Use config
 
@@ -172,24 +170,25 @@ class TransactionController extends Controller
             'description' => ['nullable', 'string', 'max:255'],
         ]);
 
-        // Revert old transaction amount from its wallet (converted to user's base currency)
+        // Revert old transaction amount from its wallet (converted to wallet's currency)
         $oldTransactionAmount = $transaction->amount;
         $oldTransactionCurrency = $transaction->currency;
         $oldTransactionDate = $transaction->transaction_date->toDateString();
+        $wallet = $transaction->wallet; // Get the associated wallet
 
         $convertedOldAmountForWallet = ExchangeRateHelper::convert(
             $oldTransactionAmount,
             $oldTransactionCurrency,
-            $userBaseCurrency,
+            $wallet->currency, // Convert to the transaction's wallet's currency
             $oldTransactionDate
         );
 
         $amountToRevertWallet = ($transaction->type === 'income') ? $convertedOldAmountForWallet : -$convertedOldAmountForWallet;
-        $transaction->wallet->decrement('balance', $amountToRevertWallet);
+        $wallet->decrement('balance', $amountToRevertWallet);
 
         $transaction->update($validated);
 
-        // Apply new transaction amount to its wallet (converted to user's base currency)
+        // Apply new transaction amount to its wallet (converted to wallet's currency)
         $newTransactionAmount = $validated['amount'];
         $newTransactionCurrency = $validated['currency'];
         $newTransactionDate = $validated['transaction_date'];
@@ -197,12 +196,12 @@ class TransactionController extends Controller
         $convertedNewAmountForWallet = ExchangeRateHelper::convert(
             $newTransactionAmount,
             $newTransactionCurrency,
-            $userBaseCurrency,
+            $wallet->currency, // Convert to the transaction's wallet's currency
             $newTransactionDate
         );
 
         $amountToUpdateWallet = ($validated['type'] === 'income') ? $convertedNewAmountForWallet : -$convertedNewAmountForWallet;
-        $transaction->wallet->increment('balance', $amountToUpdateWallet);
+        $wallet->increment('balance', $amountToUpdateWallet);
 
         return redirect()->route('transactions.index')->with('success', 'Transaction updated successfully!');
     }
@@ -215,9 +214,9 @@ class TransactionController extends Controller
         $this->authorize('delete', $transaction);
 
         $user = auth()->user();
-        $userBaseCurrency = $user->base_currency ?? 'USD';
+        $userBaseCurrency = $user->base_currency ?? 'USD'; // This is user's base currency, not wallet's
 
-        // Revert wallet balance before deleting transaction (converted to user's base currency)
+        // Revert wallet balance before deleting transaction (converted to wallet's currency)
         $wallet = $transaction->wallet;
         if ($wallet) {
             $transactionAmount = $transaction->amount;
@@ -227,7 +226,7 @@ class TransactionController extends Controller
             $convertedAmountForWallet = ExchangeRateHelper::convert(
                 $transactionAmount,
                 $transactionCurrency,
-                $userBaseCurrency,
+                $wallet->currency, // Convert to the transaction's wallet's currency
                 $transactionDate
             );
 

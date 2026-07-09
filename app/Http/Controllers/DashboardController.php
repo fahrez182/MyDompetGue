@@ -27,10 +27,27 @@ class DashboardController extends Controller
         $defaultWallet = $user->defaultWallet;
         $wallets = $user->wallets; // Get all wallets for the dropdown
 
+        // Refresh the default wallet instance to ensure its balance is up-to-date
+        if ($defaultWallet) {
+            $defaultWallet->refresh();
+        }
+
         // If no default wallet, redirect or show an error
         if (!$defaultWallet) {
             return redirect()->route('profile.edit')->with('error', 'Please set a default wallet to view your dashboard summary.');
         }
+
+        // Convert all wallet balances to the user's base currency for display in the dropdown
+        $wallets = $wallets->map(function ($wallet) use ($userBaseCurrency) {
+            $wallet->converted_balance = ExchangeRateHelper::convert(
+                $wallet->balance,
+                $wallet->currency,
+                $userBaseCurrency,
+                Carbon::now()->toDateString() // Use current date for wallet balance conversion
+            ) ?? $wallet->balance; // Fallback to original balance if conversion fails
+            return $wallet;
+        });
+
 
         // Fetch transactions for the default wallet only
         $transactions = $defaultWallet->transactions()->get();
@@ -157,9 +174,19 @@ class DashboardController extends Controller
 
         $budgets = $budgetsQuery->latest()->get();
 
-        $budgets->each(function ($budget) use ($user, $userBaseCurrency, $defaultWallet) { // Pass $defaultWallet
+        $budgets->each(function ($budget) use ($user, $userBaseCurrency, $defaultWallet) {
             $effectiveEndDate = $budget->end_date ? Carbon::parse($budget->end_date) : Carbon::now();
             $startDate = Carbon::parse($budget->start_date);
+
+            // Convert budget amount to user's base currency
+            // Use $budget->currency as the fromCurrency, which is now available
+            $budget->converted_amount = ExchangeRateHelper::convert(
+                $budget->amount,
+                $budget->currency,
+                $userBaseCurrency,
+                $startDate->toDateString() // Use budget start date for conversion
+            ) ?? $budget->amount; // Fallback to original amount if conversion fails
+
 
             // Now filtering transactions by the default wallet
             $query = $defaultWallet->transactions()
@@ -187,8 +214,8 @@ class DashboardController extends Controller
                 $currentSpent += $convertedAmount ?? $transaction->amount;
             }
 
-            $budget->current_spent = $currentSpent;
-            $budget->progress_percentage = ($budget->amount > 0) ? round(($currentSpent / $budget->amount) * 100, 2) : 0;
+            $budget->current_spent = $currentSpent; // This is already in userBaseCurrency
+            $budget->progress_percentage = ($budget->converted_amount > 0) ? round(($currentSpent / $budget->converted_amount) * 100, 2) : 0;
         });
 
 
