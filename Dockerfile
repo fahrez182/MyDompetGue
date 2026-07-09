@@ -7,7 +7,7 @@ RUN apt-get update && apt-get install -y \
     && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs \
     && docker-php-ext-install pdo pdo_mysql mbstring xml zip \
-    && apt-get clean && rm -rf /var/lib/lists/*
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
@@ -28,7 +28,7 @@ RUN mkdir -p storage/framework/sessions \
     && chmod -R 775 storage bootstrap/cache \
     && chown -R www-data:www-data /app
 
-EXCASE 8080
+EXPOSE 8080
 
 # 5. CMD Aman untuk Railway (Clear cache dulu baru di-cache ulang saat runtime)
 CMD php artisan config:clear && \
