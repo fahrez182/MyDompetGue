@@ -45,6 +45,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/premium/reporting/advanced', [PremiumController::class, 'advancedReporting'])
         ->middleware('role:premium')
         ->name('premium.reporting.advanced');
+
+    // New route for recalculating balances
+    Route::post('/dashboard/recalculate-balances', [DashboardController::class, 'recalculateBalances'])
+        ->name('dashboard.recalculate-balances');
 });
 
 require __DIR__.'/auth.php';

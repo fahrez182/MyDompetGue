@@ -1,63 +1,106 @@
 <x-app-layout>
+    <!-- Header Minimalis Sesuai Dashboard -->
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-            {{ __('Categories') }}
-        </h2>
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-1.5">
+            <h2 class="font-bold text-lg text-white leading-tight flex items-center gap-2">
+                <x-heroicon-s-tag class="w-4 h-4 text-[#3b82f6]" />
+                {{ __('Categories') }}
+            </h2>
+        </div>
     </x-slot>
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 text-gray-900 dark:text-gray-100">
-                    <div class="flex justify-end mb-4">
-                        <a href="{{ route('categories.create') }}" class="inline-flex items-center px-4 py-2 bg-gray-800 dark:bg-gray-700 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 dark:hover:bg-gray-600 focus:bg-gray-700 dark:focus:bg-gray-600 active:bg-gray-900 dark:active:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
+    <!-- Pembungkus Utama Menggunakan max-w-5xl Supaya Lebarnya Konsisten -->
+    <div class="py-6 sm:py-10 bg-[#090a0f] min-h-screen text-gray-200">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-5">
+
+            <div class="bg-[#0f172a] border border-gray-800 rounded-2xl overflow-hidden shadow-lg shadow-black/20">
+                <div class="p-5 sm:p-6">
+
+                    <!-- Bagian Atas Utama -->
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                        <h3 class="text-sm font-bold text-white flex items-center">
+                            <x-heroicon-s-list-bullet class="w-4 h-4 mr-1.5 text-[#3b82f6]" />
+                            Category Management
+                        </h3>
+                        <a href="{{ route('categories.create') }}" class="inline-flex items-center justify-center px-4 py-2 bg-[#3b82f6] hover:bg-[#2563eb] text-white font-semibold text-xs rounded-xl focus:outline-none transition shadow-lg shadow-[#3b82f6]/10 w-full sm:w-auto text-center">
+                            <x-heroicon-o-plus-circle class="w-4 h-4 mr-1.5 flex-shrink-0" />
                             {{ __('Add New Category') }}
                         </a>
                     </div>
 
-                    @if ($categories->isEmpty())
-                        <p>{{ __('No categories found. Please add some categories.') }}</p>
-                    @else
-                        <div class="overflow-x-auto">
-                            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                                <thead class="bg-gray-50 dark:bg-gray-700">
-                                    <tr>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                            {{ __('Name') }}
+                    <!-- Area Data / Tabel -->
+                    <div class="mt-4">
+                        @if ($categories->isEmpty())
+                            <div class="p-8 text-center border border-dashed border-gray-800 rounded-2xl flex flex-col items-center justify-center">
+                                <x-heroicon-o-tag class="w-10 h-10 mb-3 text-gray-600" />
+                                <p class="text-sm font-semibold text-white">{{ __('No categories found.') }}</p>
+                                <p class="text-xs text-gray-400 mt-1">{{ __('Please add some categories to organize your transactions.') }}</p>
+                                <a href="{{ route('categories.create') }}" class="mt-4 inline-flex items-center px-4 py-2 bg-transparent border border-gray-700 hover:border-gray-500 text-gray-300 hover:text-white font-semibold text-xs rounded-xl transition">
+                                    <x-heroicon-o-plus-circle class="w-3.5 h-3.5 mr-1.5" />
+                                    {{ __('Add First Category') }}
+                                </a>
+                            </div>
+                        @else
+                            <!-- Pembungkus Tabel yang Mendukung Scrollbar Tipis -->
+                            <div class="overflow-x-auto border border-gray-800 rounded-xl shadow-inner">
+                                <table class="min-w-full divide-y divide-gray-800/80">
+                                    <thead class="bg-[#111625]">
+                                    <tr class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                                        <th scope="col" class="px-5 py-3 text-left">
+                                            <x-heroicon-o-bookmark class="w-3.5 h-3.5 inline-block mr-1 align-text-bottom" /> {{ __('Name') }}
                                         </th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                            {{ __('Type') }}
+                                        <th scope="col" class="px-5 py-3 text-left">
+                                            <x-heroicon-o-arrows-up-down class="w-3.5 h-3.5 inline-block mr-1 align-text-bottom" /> {{ __('Type') }}
                                         </th>
-                                        <th scope="col" class="relative px-6 py-3">
-                                            <span class="sr-only">{{ __('Actions') }}</span>
+                                        <th scope="col" class="relative px-5 py-3">
+                                            <span class="sr-only">Actions</span>
                                         </th>
                                     </tr>
-                                </thead>
-                                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                                    </thead>
+                                    <tbody class="bg-[#0f172a] divide-y divide-gray-800/60 text-xs">
                                     @foreach ($categories as $category)
-                                        <tr>
-                                            <td class="px-6 py-4 whitespace-nowrap">
-                                                <div class="text-sm text-gray-900 dark:text-gray-100">{{ $category->name }}</div>
+                                        <tr class="hover:bg-[#151f38] transition-colors">
+                                            <!-- Nama Kategori -->
+                                            <td class="px-5 py-3.5 whitespace-nowrap font-medium text-white">
+                                                {{ $category->name }}
                                             </td>
-                                            <td class="px-6 py-4 whitespace-nowrap">
-                                                <div class="text-sm text-gray-900 dark:text-gray-100">{{ ucfirst($category->type) }}</div>
+                                            <!-- Tipe Kategori (Expense / Income dengan Badge Berwarna) -->
+                                            <td class="px-5 py-3.5 whitespace-nowrap">
+                                                    <span class="inline-flex items-center font-semibold {{ $category->type === 'income' ? 'text-emerald-400' : 'text-rose-400' }}">
+                                                        @if ($category->type === 'income')
+                                                            <x-heroicon-s-arrow-up-circle class="w-4 h-4 mr-1 flex-shrink-0" />
+                                                        @else
+                                                            <x-heroicon-s-arrow-down-circle class="w-4 h-4 mr-1 flex-shrink-0" />
+                                                        @endif
+                                                        {{ ucfirst($category->type) }}
+                                                    </span>
                                             </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                <a href="{{ route('categories.edit', $category) }}" class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300">{{ __('Edit') }}</a>
-                                                <form action="{{ route('categories.destroy', $category) }}" method="POST" class="inline-block ml-2">
+                                            <!-- Tombol Aksi -->
+                                            <td class="px-5 py-3.5 whitespace-nowrap text-right text-[11px] font-semibold space-x-2">
+                                                <a href="{{ route('categories.edit', $category) }}" class="text-[#3b82f6] hover:text-blue-400 inline-flex items-center transition">
+                                                    <x-heroicon-o-pencil-square class="w-3.5 h-3.5 mr-0.5" />
+                                                    {{ __('Edit') }}
+                                                </a>
+                                                <form action="{{ route('categories.destroy', $category) }}" method="POST" class="inline-block">
                                                     @csrf
                                                     @method('DELETE')
-                                                    <button type="submit" class="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300" onclick="return confirm('Are you sure you want to delete this category?')">{{ __('Delete') }}</button>
+                                                    <button type="submit" class="text-rose-400 hover:text-rose-300 inline-flex items-center transition bg-transparent border-0 p-0" onclick="return confirm('Are you sure you want to delete this category?')">
+                                                        <x-heroicon-o-trash class="w-3.5 h-3.5 mr-0.5" />
+                                                        {{ __('Delete') }}
+                                                    </button>
                                                 </form>
                                             </td>
                                         </tr>
                                     @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                    @endif
+                                    </tbody>
+                                </table>
+                            </div>
+                        @endif
+                    </div>
+
                 </div>
             </div>
+
         </div>
     </div>
 </x-app-layout>

@@ -233,4 +233,72 @@ class DashboardController extends Controller
             'wallets' // Pass all wallets to the view
         ));
     }
+
+    /**
+     * Recalculates all wallet balances and fixes budget currencies for the authenticated user.
+     */
+    public function recalculateBalances(): RedirectResponse
+    {
+        $user = Auth::user();
+        if (!$user) {
+            return redirect()->route('dashboard')->with('error', 'User not authenticated.');
+        }
+
+        Log::info("Recalculating balances for user: {$user->name} (ID: {$user->id}) via dashboard refresh button.");
+
+        // --- Recalculate Wallet Balances ---
+        foreach ($user->wallets as $wallet) {
+            Log::debug("  - Recalculating balance for wallet: {$wallet->name} (ID: {$wallet->id}, Current Currency: {$wallet->currency})");
+
+            $calculatedBalance = 0;
+            $transactions = $wallet->transactions()->orderBy('transaction_date')->orderBy('created_at')->get();
+
+            foreach ($transactions as $transaction) {
+                // Convert transaction amount to the wallet's currency
+                $convertedAmount = ExchangeRateHelper::convert(
+                    $transaction->amount,
+                    $transaction->currency,
+                    $wallet->currency, // Convert to the wallet's currency
+                    $transaction->transaction_date->toDateString()
+                );
+
+                if ($convertedAmount === null) {
+                    Log::warning("RecalculateBalances: Could not convert transaction ID {$transaction->id} ({$transaction->amount} {$transaction->currency}) to {$wallet->currency} on {$transaction->transaction_date->toDateString()}. Skipping this transaction for balance calculation.");
+                    continue; // Skip this transaction if conversion fails
+                }
+
+                if ($transaction->type === 'income') {
+                    $calculatedBalance += $convertedAmount;
+                } else {
+                    $calculatedBalance -= $convertedAmount;
+                }
+            }
+
+            // Update the wallet's balance if there's a significant difference
+            if (abs($wallet->balance - $calculatedBalance) > 0.01) {
+                $oldBalance = $wallet->balance;
+                $wallet->balance = $calculatedBalance;
+                $wallet->save();
+                Log::info("  - Wallet '{$wallet->name}' balance updated from " . number_format($oldBalance, 2) . " to " . number_format($calculatedBalance, 2) . " {$wallet->currency}");
+            } else {
+                Log::debug("  - Wallet '{$wallet->name}' balance is already accurate: " . number_format($calculatedBalance, 2) . " {$wallet->currency}");
+            }
+        }
+
+        // --- Fix Budget Currencies ---
+        foreach ($user->budgets as $budget) {
+            if ($budget->wallet && $budget->currency !== $budget->wallet->currency) {
+                $oldBudgetCurrency = $budget->currency;
+                $budget->currency = $budget->wallet->currency;
+                $budget->save();
+                Log::info("  - Budget '{$budget->id}' currency updated from {$oldBudgetCurrency} to {$budget->currency} (matching wallet '{$budget->wallet->name}')");
+            } elseif (!$budget->wallet) {
+                Log::warning("  - Budget '{$budget->id}' has no associated wallet. Cannot determine correct currency.");
+            } else {
+                Log::debug("  - Budget '{$budget->id}' currency is already accurate: {$budget->currency}");
+            }
+        }
+
+        return redirect()->route('dashboard')->with('success', 'Wallet balances and budget currencies refreshed successfully!');
+    }
 }

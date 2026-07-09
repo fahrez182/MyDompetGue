@@ -1,3 +1,38 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ==========================================================================
+   KUSTOMISASI SCROLLBAR GLOBAL UNTUK TEMA GELAP
+   ========================================================================== */
+
+/* 1. Mengatur lebar scrollbar (Vertikal & Horizontal) */
+::-webkit-scrollbar {
+    width: 8px;  /* Lebar scrollbar vertikal */
+    height: 8px; /* Tinggi scrollbar horizontal jika ada overflow-x */
+}
+
+/* 2. Mengatur area rel/jalur tempat scrollbar bergeser */
+::-webkit-scrollbar-track {
+    background: #090a0f; /* Disamakan dengan warna bg utama body kita */
+}
+
+/* 3. Mengatur batang penunjuk scrollbar (yang digeser) */
+::-webkit-scrollbar-thumb {
+    background: #1e293b; /* Warna abu-abu gelap transparan (slate-800) */
+    border-radius: 9999px; /* Membuat ujung batang melingkar sempurna (pill shape) */
+    border: 2px solid #090a0f; /* Trik border untuk memberi jarak/padding dari tepi track */
+}
+
+/* 4. Efek hover saat mouse berada di atas batang scrollbar */
+::-webkit-scrollbar-thumb:hover {
+    background: #3b82f6; /* Berubah menjadi warna aksen Biru Premium saat disentuh */
+}
+
+/* Dukungan untuk Firefox (Menggunakan properti standar yang lebih terbatas) */
+@supports (scrollbar-color: auto) {
+    html {
+        scrollbar-color: #1e293b #090a0f;
+        scrollbar-width: thin;
+    }
+}
