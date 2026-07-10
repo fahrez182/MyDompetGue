@@ -13,7 +13,7 @@
                                 <path d="M1.5 18a.75.75 0 0 0 0 1.5h21a.75.75 0 0 0 0-1.5H1.5Z" />
                             </svg>
                         </div>
-                        <span class="text-white font-bold text-base tracking-tight hidden md:inline-block">My<span class="text-[#3b82f6]">Dompet</span>Gue</span>
+                        <span class="text-white font-bold text-base tracking-tight hidden md:inline-block">My<span class="text-[#3b82f6]">Dompet</span>Gws</span>
                     </a>
                 </div>
 
