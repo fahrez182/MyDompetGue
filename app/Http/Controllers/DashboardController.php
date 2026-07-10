@@ -37,6 +37,14 @@ class DashboardController extends Controller
             return redirect()->route('profile.edit')->with('error', 'Please set a default wallet to view your dashboard summary.');
         }
 
+        // Convert the default wallet's balance to the user's base currency
+        $convertedDefaultWalletBalance = ExchangeRateHelper::convert(
+            $defaultWallet->balance,
+            $defaultWallet->currency,
+            $userBaseCurrency,
+            Carbon::now()->toDateString() // Use current date for conversion
+        ) ?? $defaultWallet->balance; // Fallback to original balance if conversion fails
+
         // Convert all wallet balances to the user's base currency for display in the dropdown
         $wallets = $wallets->map(function ($wallet) use ($userBaseCurrency) {
             $wallet->converted_balance = ExchangeRateHelper::convert(
@@ -230,7 +238,8 @@ class DashboardController extends Controller
             'userBaseCurrency',
             'budgets',
             'defaultWallet',
-            'wallets' // Pass all wallets to the view
+            'wallets', // Pass all wallets to the view
+            'convertedDefaultWalletBalance' // Pass the converted default wallet balance
         ));
     }
 

@@ -23,7 +23,8 @@ class WalletController extends Controller
      */
     public function create()
     {
-        return view('wallets.create');
+        $supportedCurrencies = config('currencies.supported');
+        return view('wallets.create', compact('supportedCurrencies'));
     }
 
     /**
@@ -66,7 +67,8 @@ class WalletController extends Controller
     public function edit(Wallet $wallet)
     {
         $this->authorize('update', $wallet);
-        return view('wallets.edit', compact('wallet'));
+        $supportedCurrencies = config('currencies.supported');
+        return view('wallets.edit', compact('wallet', 'supportedCurrencies'));
     }
 
     /**

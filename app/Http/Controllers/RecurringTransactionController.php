@@ -31,7 +31,10 @@ class RecurringTransactionController extends Controller
     {
         $user = Auth::user();
         $categories = $user->categories()->get();
-        return view('recurring-transactions.create', compact('categories'));
+        $currencies = ['USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF', 'CNY', 'HKD', 'NZD', 'SGD', 'KRW', 'IDR']; // Common currencies
+        $userBaseCurrency = $user->base_currency ?? 'IDR'; // Default to IDR if not set
+
+        return view('recurring-transactions.create', compact('categories', 'currencies', 'userBaseCurrency'));
     }
 
     /**
@@ -123,7 +126,9 @@ class RecurringTransactionController extends Controller
         $this->authorize('update', $recurringTransaction);
         $user = Auth::user();
         $categories = $user->categories()->get();
-        return view('recurring-transactions.edit', compact('recurringTransaction', 'categories'));
+        $currencies = ['USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF', 'CNY', 'HKD', 'NZD', 'SGD', 'KRW', 'IDR']; // Common currencies
+
+        return view('recurring-transactions.edit', compact('recurringTransaction', 'categories', 'currencies'));
     }
 
     /**

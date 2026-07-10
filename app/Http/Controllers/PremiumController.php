@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Auth; // Import Auth facade
 use Illuminate\Http\RedirectResponse; // Import RedirectResponse
 use App\Models\Transaction; // Import the Transaction model
 use App\Models\Category; // Import the Category model
+use App\Models\Wallet; // Import the Wallet model
 
 class PremiumController extends Controller
 {
@@ -77,6 +78,12 @@ class PremiumController extends Controller
         $totalExpense = $transactions->where('type', 'expense')->sum('amount');
         $netBalance = $totalIncome - $totalExpense;
 
+        // Get the user's base currency
+        $currencySymbol = $user->base_currency ?? 'Rp'; // Default to 'Rp' if not set
+
+        // Calculate total balance across all wallets
+        $totalWalletBalance = $user->wallets()->sum('balance');
+
         // Prepare data for category chart
         $categoryExpenses = $transactions->where('type', 'expense')
                                          ->groupBy('category_id')
@@ -104,6 +111,8 @@ class PremiumController extends Controller
             'netBalance' => $netBalance,
             'categoryExpenses' => $categoryExpenses,
             'categoryIncomes' => $categoryIncomes,
+            'currencySymbol' => $currencySymbol,
+            'totalWalletBalance' => $totalWalletBalance, // Pass total wallet balance to the view
         ]);
     }
 }

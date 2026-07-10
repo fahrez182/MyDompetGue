@@ -91,9 +91,10 @@ class BudgetController extends Controller
         $rules = [
             'category_id' => ['nullable', 'exists:categories,id'],
             'amount' => ['required', 'numeric', 'min:0.01'],
-            'period' => ['required', 'in:monthly,yearly'],
+            'period' => ['required', 'in:monthly,yearly'], // Fixed validation rule
             'start_date' => ['required', 'date'],
             'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
+            'currency' => ['required', 'string', 'max:3'],
         ];
 
         // Add wallet_id validation only for premium users
@@ -157,9 +158,10 @@ class BudgetController extends Controller
         $rules = [
             'category_id' => ['nullable', 'exists:categories,id'],
             'amount' => ['required', 'numeric', 'min:0.01'],
-            'period' => ['required', 'in:monthly', 'yearly'],
+            'period' => ['required', 'in:monthly,yearly'], // Fixed validation rule
             'start_date' => ['required', 'date'],
             'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
+            'currency' => ['required', 'string', 'max:3'],
         ];
 
         // Add wallet_id validation only for premium users

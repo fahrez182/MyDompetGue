@@ -20,7 +20,7 @@
                             {{ __('Current Wallet') }}: <span class="text-white ml-1 font-bold">{{ $defaultWallet->name }}</span>
                         </h3>
                         <p class="text-2xl sm:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-[#3b82f6]">
-                            {{ number_format($defaultWallet->balance, 2, ',', '.') }} {{ $userBaseCurrency }}
+                            {{ number_format($convertedDefaultWalletBalance, 2, ',', '.') }} {{ $userBaseCurrency }}
                         </p>
                         <p class="text-[11px] text-gray-400 mt-0.5 mb-4">
                             {{ __('This dashboard reflects transactions from your current default wallet.') }}

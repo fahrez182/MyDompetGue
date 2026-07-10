@@ -8,6 +8,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\View\View;
+use App\Helpers\ExchangeRateHelper; // Import the helper
+use Carbon\Carbon; // Import Carbon
 
 class ProfileController extends Controller
 {
@@ -17,11 +19,25 @@ class ProfileController extends Controller
     public function edit(Request $request): View
     {
         $user = $request->user();
+        $userBaseCurrency = $user->base_currency ?? 'USD'; // Get user's base currency
+
         $wallets = $user->wallets()->latest()->get(); // Fetch user's wallets
+
+        // Convert each wallet's balance to the user's base currency
+        $wallets->map(function ($wallet) use ($userBaseCurrency) {
+            $wallet->converted_balance = ExchangeRateHelper::convert(
+                $wallet->balance,
+                $wallet->currency,
+                $userBaseCurrency,
+                Carbon::now()->toDateString() // Use current date for conversion
+            ) ?? $wallet->balance; // Fallback to original balance if conversion fails
+            return $wallet;
+        });
 
         return view('profile.edit', [
             'user' => $user,
             'wallets' => $wallets, // Pass wallets to the view
+            'userBaseCurrency' => $userBaseCurrency, // Pass userBaseCurrency to the view
         ]);
     }
 
