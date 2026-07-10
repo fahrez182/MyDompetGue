@@ -88,14 +88,16 @@ class PremiumController extends Controller
         $categoryExpenses = $transactions->where('type', 'expense')
                                          ->groupBy('category_id')
                                          ->mapWithKeys(function ($group, $categoryId) use ($categories) {
-                                             $categoryName = $categories->find($categoryId)->name ?? 'Uncategorized';
+                                             $category = $categories->find($categoryId);
+                                             $categoryName = $category ? $category->name : 'Uncategorized';
                                              return [$categoryName => $group->sum('amount')];
                                          });
 
         $categoryIncomes = $transactions->where('type', 'income')
                                         ->groupBy('category_id')
                                         ->mapWithKeys(function ($group, $categoryId) use ($categories) {
-                                            $categoryName = $categories->find($categoryId)->name ?? 'Uncategorized';
+                                            $category = $categories->find($categoryId);
+                                            $categoryName = $category ? $category->name : 'Uncategorized';
                                             return [$categoryName => $group->sum('amount')];
                                         });
 
